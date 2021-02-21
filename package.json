@@ -1,0 +1,16 @@
+{
+  "name": "ring_fibonacci",
+  "version": "1.0.0",
+  "description": "Print first N Fibonacci and first N prime numbers in parallel.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "is-prime-value": "^1.0.0",
+    "jquery": "^3.3.1",
+    "lodash": "^4.17.10"
+  },
+  "author": "Susan Imrie",
+  "license": "ISC"
+}
