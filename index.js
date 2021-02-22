@@ -8,7 +8,7 @@
 
 
 //const fs = require('fs');
-const { toNumber, isInteger, reducer } = require("lodash");
+const { toNumber, isInteger, reducer, sum } = require("lodash");
 const events = require("events");
 const { format } = require("util");
 const { exit } = require("process");
@@ -19,56 +19,90 @@ const readline = require("readline");
 let prime_count = 0;
 let fib_count = 0;
 let N = 0;
-let capture = [];
+let capture = ["output:"];
 let output = "";
 
 
 const eventEmitter = new events.EventEmitter();
 
-
-const primeNumberHandler = function (fib_sum) {
-    if (prime_count > N) {
-        //return;
-    }
-    if (isPrime(fib_sum)) {
-        prime_count++;
-        output = format(`PRIME %d: %d`, prime_count, fib_sum);
-        capture.push(output);
-    }
-}
-
-const fibNumberHandler = function (fib_sum) {
-    if (fib_count > N) {
-        //return;
-    }
-    fib_count++;
-    output=format(`FIB %d: %d`, fib_count, fib_sum);
+const primeNumberHandler = (i, prime_number) => {
+    output = format(`PRIME %d: %d`, i, prime_number);
+    //console.log(output);
     capture.push(output);
 }
 
-const fibonacci = function(n) {
+const fibNumberHandler = (i, fibonacci_number) => {
+    output=format(`FIB %d: %d`, i, fibonacci_number);
+    //console.log(output);
+    capture.push(output);
+}
+
+const fibonacci_recursive = async (n) => {
+    let result = 0;
+    if (n <= 0) {
+        result = 0;
+        eventEmitter.emit("fibonacci", n, result);
+        return result;
+    } else if (n === 1) {
+        result = 1;
+        eventEmitter.emit("fibonacci", n, result);
+        return result;
+    } else {
+        // do recursive stuff
+        const fib = fibonacci_recursive;
+        const last_number = await fib(n-1);
+        const previous_number = await fib(n-2);
+        result = Promise.all([last_number, previous_number]).then((values) => {
+            let fib_sum = sum(values);
+            if (n > 1) {
+                eventEmitter.emit("fibonacci", n, fib_sum);
+            }
+            return fib_sum;
+        }).catch((err) => {
+            console.log(err.message)
+            return null;
+        });
+        return result;
+    }
+    return result;
+};
+
+const fibonacci_reducer = async(n) => {
+    if (n === 0) {
+        return 0;
+    }
     if (n === 1) {
         return 1;
-    } else if (n < 1) {
-        return "OOPS";
     }
 
-    let array = new Array(n);                              // <---- Starting here
+    let array = new Array(n);
     let filled = array.fill(1);
     let reduced = filled.reduce((acc, _, i) => {
         let res = (i <= 1) ? i : acc[i-2] + acc[i-1];
         acc.push(res);
-        eventEmitter.emit("fib_sum", res);
+        eventEmitter.emit("fibonacci", i, res);
         return acc;                          
-    },[]); // <- reduce is initialized with an array (new array),
+    },[]);
     const sum_of_last_two_n = reduced[n - 1] + reduced[n - 2];
-    eventEmitter.emit("fib_sum", sum_of_last_two_n);
+    eventEmitter.emit("fibonacci", n, sum_of_last_two_n);
     return sum_of_last_two_n;
 }
 
+const primes = async (n) => {
+    let i = 0;
+    let prime_count = 0;
+    do {
+        prime_count++;
+        if (isPrime(i)) {
+            eventEmitter.emit("prime", prime_count, i);
+        }
+        i++;
+    } while (prime_count <= n);
+    return;
+}
 
-eventEmitter.addListener('fib_sum', fibNumberHandler);
-eventEmitter.addListener('fib_sum', primeNumberHandler);
+eventEmitter.addListener('fibonacci', fibNumberHandler);
+eventEmitter.addListener('prime', primeNumberHandler);
 
 const readline_inteface = readline.createInterface({
     input: process.stdin,
@@ -88,9 +122,13 @@ readline_inteface.question(`Until I reach what integer should I process Fibonacc
         readline_inteface.close()
         exit(0);
     }
-    console.log(`Processing Fibonacci numbers up to ${N}.  Prime numbers will be noted.`)
+    console.log(`Processing Fibonacci and prime numbers up to ${N}.`)
     readline_inteface.close()
-    fibonacci(N);
-    capture = capture.join("\n");
-    console.log(capture);
+    fibonacci_recursive(N);
+    //fibonacci_reducer(N);
+    primes(N);
+    setTimeout(function() {
+        capture = capture.join("\n");
+        console.log(capture);
+    }, 1000);
 })
