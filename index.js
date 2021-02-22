@@ -107,13 +107,13 @@ eventEmitter.addListener('prime', primeNumberHandler);
 
 // Webhook function
 const webhook = (captured_output) => {
-    //"https://hooks.glip.com/webhook/38dbfcb8-57c2-49d6-a7c1-44ed88024ee0";
+    //"https://hooks.glip.com/webhook/[see instructions for full path]";
     const hostname = "hooks.glip.com";
-    const path = "/webhook/38dbfcb8-57c2-49d6-a7c1-44ed88024ee0";
+    const path = "/webhook/[see instructions for full path]";
     const payload = {};
     const content = fs.readFileSync(__filename, "utf8");
     const title = "Susan Imrie";
-    const activity = "Skills Assessment for RingCentral";
+    const activity = "Skills Assessment for [Company Name]";
     const github = "https://github.com/simrie/fibonacci_primes_parallel_async_node";
     const body = format(`index.js:\n%s\n\n%s`, content, captured_output);
     payload['title'] = title;
