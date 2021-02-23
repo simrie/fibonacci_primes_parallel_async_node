@@ -10,16 +10,18 @@
 */
 
 
-//const fs = require('fs');
+const fs = require('fs');
+const https = require('https');
 const { toNumber, isNumber, isInteger, reduce, sum } = require("lodash");
 const events = require("events");
 const { format } = require("util");
 const { exit } = require("process");
 const isPrime = require("is-prime-value");
 const readline = require("readline");
+const { fstat } = require("fs");
 
 let N = 0;
-let capture = ["output:"];
+let capture = ["output"];
 let output = "";
 
 const eventEmitter = new events.EventEmitter();
@@ -105,7 +107,45 @@ eventEmitter.addListener('prime', primeNumberHandler);
 
 // Webhook function
 const webhook = (captured_output) => {
-    console.log(captured_output);
+    //"https://hooks.glip.com/webhook/[see instructions for full path]";
+    const hostname = "hooks.glip.com";
+    const path = "/webhook/[see instructions for full path]";
+    const payload = {};
+    const content = fs.readFileSync(__filename, "utf8");
+    const title = "Susan Imrie";
+    const activity = "Skills Assessment for [Company Name]";
+    const github = "https://github.com/simrie/fibonacci_primes_parallel_async_node";
+    const body = format(`index.js:\n%s\n\n%s`, content, captured_output);
+    payload['title'] = title;
+    payload['activity'] = activity;
+    payload['github'] = github;
+    payload['body'] = body;
+    const data = JSON.stringify(payload);
+    const options = {
+        hostname: hostname,
+        port: 443,
+        path: path,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': data.length
+        }
+    }
+    const req = https.request(options, res => {
+        console.log(`statusCode: ${res.statusCode}`)
+      
+        res.on('data', d => {
+          process.stdout.write(d);
+        })
+    });
+      
+    req.on('error', error => {
+        console.error(error);
+    })
+      
+    req.write(data);
+    req.end();
+    
 }
 
 // Console input handler is the main entry point
